@@ -1,0 +1,11 @@
+(i) What is the simulation time of the file?
+god --endian=big -j 0 -N 8 -t f8  B100.00100
+offset        The simulation time
+0000000       1.0000000000000018
+
+(ii)
+total number of particles:1078071040
+
+(iii)
+god --endian=big -j 0 -N 8 -t f8  B100.00100 to see the simulation time
+god -Ad -td4 -j8 -N4 B100.00100 to see the total number of particles.

@@ -1,0 +1,11 @@
+(i)What is the mass and position of particle 100?
+particle 100's mass should start at 3600: 1.215187008e-314
+x position: 0003604        1.1502991296e-314
+y position: 0003608        1.0343168635e-314
+z position: 0003612         6.829378173e-315
+
+(ii)
+mass: god -An -tfL -j3600 -N4 B100.00100
+x position:(god -Ad -tfL -j3604 -N4 B100.00100)
+y position:(god -Ad -tfL -j3608 -N4 B100.00100)
+z position:(god -Ad -tfL -j3612 -N4 B100.00100)
