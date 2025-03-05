@@ -1,0 +1,2 @@
+C = A + B; Where A, B are 2D Blitz arrays with dimension (3 * 3).
+It performs element-wise addition, meaning each corresponding element in A and B is added together.
