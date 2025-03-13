@@ -1,0 +1,16 @@
+./assign_openmp B100.00100 500 PCS
+Reading file took 3.0791e-05 s
+Mass assignment took0.105356 s
+Projection took0.0506515 s
+Projected density map saved as projected_density_PCS_500.dat
+
+./assign B100.00100 500 PCS 
+Reading file took 2.9208e-05 s
+Mass assignment took0.10763 s
+Projection took0.0505585 s
+Projected density map saved as projected_density_PCS_500.dat
+
+Above shows almost the same timing for the mass assignment phase as the serial version.
+The use of #pragma omp atomic can limit scalability if many threads try to update the same grid cell at once.
+
+It suggests that the overhead of atomic updates and thread synchronization is dominant over the benefits of parallel execution with your current problem size and hardware

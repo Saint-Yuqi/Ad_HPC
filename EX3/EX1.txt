@@ -1,0 +1,5 @@
+./assign B100.00100 100
+
+Reading file took 8.9917e-05s
+Mass assignment took0.0309086s
+Projection took0.000511083s
