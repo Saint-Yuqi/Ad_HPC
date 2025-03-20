@@ -1,0 +1,6 @@
+I have modified the code so that our 3D real array allocates memory in a shape of 
+N × N × (N + 2) floats (instead of N × N × N). This is required by FFTW for in-place 
+real-to-complex transforms, which need 2 extra floats of padding along the last dimension.
+1. Changed the allocated size from (nGrid * nGrid * nGrid) to (nGrid * nGrid * (nGrid + 2)).
+2. Changed the Blitz++ shape from (nGrid, nGrid, nGrid) to (nGrid, nGrid, nGrid + 2).
+3. Everything else (e.g., mass assignment, reading input, etc.) remains the same.

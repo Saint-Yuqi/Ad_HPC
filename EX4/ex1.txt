@@ -1,0 +1,12 @@
+For the assign.cpp, we could modify the creation array instead of //Array<float,3> grid(nGrid,nGrid,nGrid); to be 
+// New way (you allocate the memory externally, then Blitz++ “wraps” it)(EX1)
+// Because we need nGrid * nGrid * nGrid floats in total
+std::size_t totalSize = std::size_t(nGrid) * std::size_t(nGrid) * std::size_t(nGrid);
+
+// Allocate with 64-byte alignment (C++17)
+float* memGrid = new (std::align_val_t(64)) float[ totalSize ];
+
+blitz::TinyVector<int,3> shape(nGrid, nGrid, nGrid);
+
+// Construct the array with the external pointer, telling Blitz++ to delete[] it internally
+blitz::Array<float,3> grid(memGrid, shape, blitz::deleteDataWhenDone);
