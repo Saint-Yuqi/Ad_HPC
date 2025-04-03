@@ -1,0 +1,22 @@
+Before
+Loading 1,000,000 particles
+File reading took 0.0227305 seconds (1,510.41 MB/s).
+Assigning mass to the grid using order 1
+Mass assignment took 0.00598567 seconds.
+Total mass assigned is      0.32
+FFT took 0.00525496 seconds.
+Using 50 linear bins.
+
+speed: 10^{6}/ 0.00598567  = 1.75 * 10^*{8} points/s
+
+After
+Loading 1,000,000 particles
+File reading took 0.0265077 seconds (1,295.18 MB/s).
+Assigning mass to the grid using order 1
+Mass assignment took 0.0030785 seconds.
+Total mass assigned is      0.32
+Using 12 threads for the FFT.
+FFT took 0.00411425 seconds.
+Using 50 linear bins.
+
+speed: 10^{6}/ 0.00411425  = 2.43 * 10^*{8} points/s

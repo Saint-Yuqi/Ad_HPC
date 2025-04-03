@@ -1,24 +1,23 @@
-CXX	= g++
+CXX = /opt/homebrew/Cellar/llvm/19.1.7_1/bin/clang++
 
-# You might need to specify the include paths for blitz and/or boost
-BLITZ_INCLUDE=-I /opt/homebrew/Cellar/blitz/1.0.2/include
-BOOST_INCLUDE=-I /opt/homebrew/Cellar/boost/1.83.0/include
-FFTW_INCLUDE=-I /opt/homebrew/Cellar/fftw/3.3.10_1/include
+BLITZ_INCLUDE = -I /opt/homebrew/Cellar/blitz/1.0.2/include
+BOOST_INCLUDE = -I /opt/homebrew/Cellar/boost/1.87.0/include
+FFTW_INCLUDE  = -I /opt/homebrew/Cellar/fftw/3.3.10_2/include
+OMP_INCLUDE   = -I /opt/homebrew/opt/llvm/include
 
-# Linux
-# OMP = -fopenmp
-# LDOMP = -fopenmp
-# MacOS
-OMP = -Xpreprocessor -fopenmp -I/opt/homebrew/Cellar/libomp/18.1.0/include
-LDOMP = -L/opt/homebrew/Cellar/libomp/18.1.0/lib -lomp
-LDFFTW=-L /opt/homebrew/Cellar/fftw/3.3.10_1/lib -lfftw3f
+# OpenMP flags (Homebrew LLVM supports it natively)
+OMP     = -fopenmp
+LDOMP   = -L /opt/homebrew/opt/llvm/lib -lomp
+LDFFTW  = -L /opt/homebrew/Cellar/fftw/3.3.10_2/lib -lfftw3f_omp -lfftw3f
 
-CXXFLAGS = $(BLITZ_INCLUDE) $(BOOST_INCLUDE) $(FFTW_INCLUDE) $(OMP) -Wno-deprecated-declarations  -O3 -std=c++17
+CXXFLAGS = $(BLITZ_INCLUDE) $(BOOST_INCLUDE) $(FFTW_INCLUDE) $(OMP_INCLUDE) \
+           $(OMP) -O3 -std=c++17 -Wno-deprecated-declarations
 
-assign	: assign.o tipsy.h Makefile
-	$(CXX) -o assign assign.o $(LDOMP) $(LDFFTW) $(LDFLAGS) $(LDLIBS)
+assign: assign.o tipsy.h Makefile
+	$(CXX) -o assign assign.o $(LDOMP) $(LDFFTW)
 
-assign.o	: assign.cpp tipsy.h aweights.h Makefile
+assign.o: assign.cpp tipsy.h aweights.h Makefile
+	$(CXX) -c $(CXXFLAGS) assign.cpp
 
 clean:
 	rm -f assign assign.o
