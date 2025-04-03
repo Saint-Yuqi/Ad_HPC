@@ -168,4 +168,23 @@ int main(int argc, char *argv[]) {
 
     fftwf_execute(plan);
     fftwf_destroy_plan(plan);
+    //Exercise 1
+    int k_nz = nGrid/2 + 1;
+
+    for (int ix = 0; ix < nGrid; ix++) {
+        int kx = (ix <= nGrid/2) ? ix : (ix - nGrid);
+
+        for (int iy = 0; iy < nGrid; iy++) {
+            int ky = (iy <= nGrid/2) ? iy : (iy - nGrid);
+
+            for (int iz = 0; iz < k_nz; iz++) {
+                int kz = iz;
+
+                std::complex<float> val = kgrid(ix, iy, iz);
+
+                float delta_k_mag = std::sqrt(std::norm(val));
+
+                float k_abs = std::sqrt(float(kx * kx + ky * ky + kz * kz));
+            }
+        }
 }
