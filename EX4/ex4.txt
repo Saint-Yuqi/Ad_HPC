@@ -1,0 +1,34 @@
+We have an existing array of floats allocated with extra padding to support
+in-place FFT. For example:
+
+  float* data = new (std::align_val_t(64)) float[ totalSize ];
+
+Then we create a Blitz++ array of shape (N, N, N+2) like so:
+
+  blitz::Array<float,3> padded(data, shapeReal, blitz::deleteDataWhenDone);
+
+The next step is to interpret that same memory as a complex array
+(i.e., std::complex<float>) for the frequency-domain data, without
+actually allocating more memory.
+
+In C++, we must use a reinterpret_cast to treat the same pointer
+(`float*`) as a pointer to `std::complex<float>`. This is allowed as long
+as we know the data truly will be written/read in complex form. For an
+in-place FFT, that will indeed be the case.
+
+Finally, we must not let the second array "double-free" the memory.
+We already told `padded` to own (delete) the memory. Therefore, we specify
+`blitz::neverDeleteData` for the complex array constructor. This ensures
+only one array (the real `padded`) is responsible for freeing the memory.
+1. reinterpret_cast is required because we are changing the pointer
+   from `float*` to `std::complex<float>*`.
+2. We cannot use `deleteDataWhenDone` for both arrays because that
+   would cause a double-free error. One array (the real-space array)
+   deletes the memory, the other (the complex-space array) only "views" it.
+3. The padded array is shape (N, N, N+2) for real data. The complex
+   array might be shape (N, N, N/2+1), depending on how FFTW organizes
+   the frequency data in 3D.
+
+That completes the conversion to a complex array sharing the same
+memory for in-place FFT usage.
+

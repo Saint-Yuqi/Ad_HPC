@@ -1,0 +1,6 @@
+These are the essential steps to perform a 3D, in-place,
+real-to-complex transform with single-precision FFTW in your C++ + Blitz++ project.
+You allocate a float array with extra padding, create a real and a complex Blitz++
+array sharing that buffer, plan the FFT with `fftwf_plan_dft_r2c_3d()`, execute it,
+and finally destroy the plan. The memory is freed automatically by Blitz++.
+
