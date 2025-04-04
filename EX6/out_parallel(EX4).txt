@@ -1,0 +1,21 @@
+Loading 1,000,000 particles (parallel read)
+Parallel file reading took 0.0131243 seconds.
+File reading rate 2,615.94 MB/s.
+Assigning mass to the grid using order 1
+Mass assignment took 0.00566942 seconds.
+Total mass assigned is 0.32
+Density projection took 0.00129517 seconds.
+FFT took 0.00621404 seconds.
+Using 50 linear bins.
+
+Loading 1,000,000 particles
+File reading took 0.0270995 seconds (1,266.9 MB/s).
+Assigning mass to the grid using order 1
+Mass assignment took 0.00438208 seconds.
+Total mass assigned is      0.32
+Density projection took 0.000792917 seconds.
+FFT took 0.0057085 seconds.
+Using 50 linear bins.
+
+(base)  yang@Mac-mini  ~/HPC/Ad_HPC/EX6   main ±  cmp density.dat density_parallel.dat
+there is no difference between this two version.
