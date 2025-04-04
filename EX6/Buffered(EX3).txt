@@ -1,0 +1,11 @@
+[eiger][yyuqi@eiger-ln004 EX6]$ ./assign B100.00100 100
+Loading 1,000,000 particles
+File reading took  0.0217305 seconds (1,511.41 MB/s).
+Assigning mass to the grid using order 1
+Mass assignment took 0.0341358 seconds.
+Total mass assigned is      0.32
+FFT took 0.0101252 seconds.
+Using 50 linear bins.
+
+It improve the file reading time.
+
