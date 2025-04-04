@@ -19,7 +19,6 @@ LDFFTW  = $(FFTW_LIB) -lfftw3f_threads -lfftw3f
 # Final compilation flags
 CXXFLAGS = $(BLITZ_INCLUDE) $(BOOST_INCLUDE) $(FFTW_INCLUDE) $(OMP) \
            -O3 -std=c++17 -Wno-deprecated-declarations
-
 assign: assign.o tipsy.h Makefile
 	$(CXX) -o assign assign.o $(LDOMP) $(LDFFTW)
 

@@ -91,11 +91,16 @@ int main(int argc, char *argv[]) {
                   << argv[1] << std::endl;
         return errno;
     }
-
-    // ------ 8MB custom buffer  ------
-    static std::vector<char> fileBuffer(8 * 1024 * 1024);
-    io.rdbuf()->pubsetbuf(fileBuffer.data(), fileBuffer.size());
-    // --------------------------------
+    auto nper = (N + nthreads - 1) / nthreads;
+            auto beg = nper * tid;
+            auto end = nper * (tid + 1);
+            if (beg>N) beg = N;
+            if (end>N) end = N;
+            std::ifstream io(argv[1],std::ifstream::binary);
+    constexpr std::streamsize buffer_size = 8 * 1024 * 1024;
+        char* buffer = new char[buffer_size];
+        io.rdbuf()->pubsetbuf(buffer, buffer_size);
+        io.seekg( sizeof(tipsy::header) + beg*sizeof(tipsy::dark));
 
     tipsy::header h;
     if (!io.read(reinterpret_cast<char*>(&h), sizeof(h))) {

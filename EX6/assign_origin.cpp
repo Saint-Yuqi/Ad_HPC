@@ -157,6 +157,7 @@ int main(int argc, char *argv[]) {
 
     // Write out the 2D map
     std::ofstream of("density.dat",std::ios::binary);
+    
     of.write(reinterpret_cast<char*>(projected.data()),projected.size()*sizeof(float));
 
     // Calculate deleta
