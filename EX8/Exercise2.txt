@@ -1,0 +1,2 @@
+After comparing the output_old.txt and output_new.txt, it shows no difference between them.
+diff output_old.txt output_new.txt
