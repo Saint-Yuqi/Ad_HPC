@@ -1,0 +1,19 @@
+
+//Exercise2  Add new variables for transposed info:
+ptrdiff_t local_n0, local_0_start;
+ptrdiff_t local_n1, local_1_start;   // <-- new from fftwf_mpi_local_size_3d_transposed
+ptrdiff_t complex_count;
+complex_count = fftwf_mpi_local_size_3d_transposed(
+    nGrid, nGrid, nGrid,           // the full real domain size
+    MPI_COMM_WORLD,
+    &local_n0, &local_0_start,     // regular data distribution
+    &local_n1, &local_1_start);    // transposed data distribution
+
+auto k_nz = nGrid/2 + 1;
+
+yyuqi@eiger-ln004:~/Ad_HPC/EX10> ./assign B100.00100 100 1
+Reading 1000000 dark particles.
+File read took 0.0291964 s (1175.91 MB/s)
+Rank=0 local_n0=100 local_0_start=0
+         local_n1=100 local_1_start=0
+Rank=0: local_n0 == local_n1 and local_0_start == local_1_start.

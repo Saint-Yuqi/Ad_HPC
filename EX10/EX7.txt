@@ -1,0 +1,122 @@
+// Exercise7: Replace single 3D FFT call with loops + transpose + loops
+
+// (A) 2D transforms on real slabs (r2c)
+{
+    int Nx2D = nGrid;
+    int Ny2D = nGrid;
+    std::vector<float> slab2D_in ( Nx2D * Ny2D );
+    std::vector<std::complex<float>> slab2D_out( Nx2D*(Ny2D/2 +1) );
+
+    auto t2d0 = hrc::now();
+
+    // Loop over local x-slab
+    for(int ix = local_0_start; ix < local_0_start + local_n0; ix++){
+        // copy from raw_slab => slab2D_in
+        for(int iy=0; iy<nGrid; iy++){
+            for(int iz=0; iz<nGrid; iz++){
+                slab2D_in[iy*Ny2D + iz] = raw_slab(ix, iy, iz);
+            }
+        }
+        // now do the transform: new-array execute
+        fftwf_execute_dft_r2c(
+            plan_2d,
+            slab2D_in.data(),
+            reinterpret_cast<fftwf_complex*>(slab2D_out.data())
+        );
+
+        // store back to raw_slab
+        for(int iy=0; iy<nGrid; iy++){
+            for(int iz=0; iz<(nGrid/2+1); iz++){
+                float re = slab2D_out[iy*(nGrid/2+1) + iz].real();
+                float im = slab2D_out[iy*(nGrid/2+1) + iz].imag();
+                raw_slab(ix, iy, 2*iz  ) = re;
+                raw_slab(ix, iy, 2*iz+1) = im;
+            }
+        }
+    }
+
+    auto t2d1 = hrc::now();
+    if(irank==0){
+        double dt2d = duration(t2d1 - t2d0).count();
+        std::cerr<<"Exercise4/7: 2D slab transforms took "<< dt2d <<" s.\n";
+    }
+}
+
+// (B) Transpose (x,y)->(y,x) with MPI - out-of-place
+{
+    // Copy from raw_slab => transpose_in
+    ptrdiff_t local_size_pre = local_n0 * nGrid * k_nz;
+    {
+        ptrdiff_t idx = 0;
+        for(int ix=local_0_start; ix<local_0_start+local_n0; ix++){
+            for(int iy=0; iy<nGrid; iy++){
+                for(int iz=0; iz<k_nz; iz++){
+                    float re = raw_slab(ix, iy, 2*iz  );
+                    float im = raw_slab(ix, iy, 2*iz+1);
+                    transpose_in[idx][0] = re;
+                    transpose_in[idx][1] = im;
+                    idx++;
+                }
+            }
+        }
+    }
+
+    // do the transpose
+    fftwf_execute(plan_transpose);
+
+    // Now transpose_out has (y,x,z).
+    // copy back to raw_slab for demonstration
+    ptrdiff_t local_size_post = local_n0_t * nGrid * k_nz;
+    {
+        ptrdiff_t idx=0;
+        for(int iy=local_0_start_t; iy<local_0_start_t+local_n0_t; iy++){
+            for(int ix=0; ix<nGrid; ix++){
+                for(int iz=0; iz<k_nz; iz++){
+                    float re = transpose_out[idx][0];
+                    float im = transpose_out[idx][1];
+                    raw_slab(iy, ix, 2*iz  ) = re;
+                    raw_slab(iy, ix, 2*iz+1) = im;
+                    idx++;
+                }
+            }
+        }
+    }
+}
+
+// (C) 1D pencils: c2c along x
+{
+    std::vector<std::complex<float>> pencil_in(nGrid);
+    std::vector<std::complex<float>> pencil_out(nGrid);
+
+    auto t1d0 = hrc::now();
+
+    for(int iy = local_0_start_t; iy<local_0_start_t + local_n0_t; iy++){
+        for(int iz=0; iz<k_nz; iz++){
+            // copy in
+            for(int ix=0; ix<nGrid; ix++){
+                float re = raw_slab(iy, ix, 2*iz);
+                float im = raw_slab(iy, ix, 2*iz+1);
+                pencil_in[ix] = std::complex<float>(re, im);
+            }
+            // new-array execute for plan_1d
+            fftwf_execute_dft(
+                plan_1d,
+                reinterpret_cast<fftwf_complex*>(pencil_in.data()),
+                reinterpret_cast<fftwf_complex*>(pencil_out.data())
+            );
+            // copy out
+            for(int ix=0; ix<nGrid; ix++){
+                float re = pencil_out[ix].real();
+                float im = pencil_out[ix].imag();
+                raw_slab(iy, ix, 2*iz  ) = re;
+                raw_slab(iy, ix, 2*iz+1) = im;
+            }
+        }
+    }
+
+    auto t1d1 = hrc::now();
+    if(irank==0){
+        double dt1d = duration(t1d1 - t1d0).count();
+        std::cerr<<"Exercise6/7: 1D pencil transforms took "<< dt1d <<" s.\n";
+    }
+}

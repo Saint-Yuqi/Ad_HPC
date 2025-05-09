@@ -1,0 +1,49 @@
+//Exercise5: Manual Transpose w/ MPI
+
+fftwf_plan plan_transpose = nullptr;
+ptrdiff_t local_n0_t, local_0_start_t;
+ptrdiff_t local_n1_t, local_1_start_t;
+fftwf_complex * transpose_in  = nullptr;
+fftwf_complex * transpose_out = nullptr;
+{
+    ptrdiff_t howmany = k_nz;
+    ptrdiff_t n2d[2] = { nGrid, nGrid };
+    ptrdiff_t block0=1, block1=1;
+
+    // Get local size in the transposed distribution
+    ptrdiff_t local_size_transposed = fftwf_mpi_local_size_many_transposed(
+        2,            // rank=2
+        n2d,
+        howmany,
+        block0,
+        block1,
+        MPI_COMM_WORLD,
+        &local_n0_t, &local_0_start_t,
+        &local_n1_t, &local_1_start_t
+    );
+
+    // We allocate in/out once, for the final transpose
+    // local_size_pre = local_n0 * nGrid * k_nz
+    // local_size_post= local_n0_t * nGrid * k_nz
+    ptrdiff_t local_size_pre  = local_n0 * nGrid * k_nz;
+    ptrdiff_t local_size_post = local_n0_t * nGrid * k_nz;
+
+    // We must allocate the max needed if plan is out-of-place
+    ptrdiff_t max_needed = std::max(local_size_pre, local_size_post);
+
+    transpose_in  = fftwf_alloc_complex( max_needed );
+    transpose_out = fftwf_alloc_complex( max_needed );
+
+    // Create an out-of-place plan referencing these pointers:
+    plan_transpose = fftwf_mpi_plan_many_transpose(
+        nGrid,       // n0
+        nGrid,       // n1
+        howmany,     // howmany
+        block0,
+        block1,
+        reinterpret_cast<float*>(transpose_in),
+        reinterpret_cast<float*>(transpose_out),
+        MPI_COMM_WORLD,
+        FFTW_ESTIMATE
+    );
+}

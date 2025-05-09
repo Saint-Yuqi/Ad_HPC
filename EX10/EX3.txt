@@ -1,0 +1,49 @@
+//Exercise3
+GeneralArrayStorage<3> transStorage;
+transStorage.ordering()(0) = thirdDim;  
+transStorage.ordering()(1) = firstDim;  
+transStorage.ordering()(2) = secondDim;
+// base: let dimension 0 start at local_1_start
+transStorage.base()(0) = local_1_start;
+transStorage.base()(1) = 0;
+transStorage.base()(2) = 0;
+Array<std::complex<float>,3> kslabTransposed(
+    reinterpret_cast<std::complex<float>*>(slab_data),
+    shape(local_n1, nGrid, k_nz),
+    neverDeleteData,   // memory policy
+    transStorage
+);
+
+// define "noghost" subarray => index range in 0th dim from local_1_start..(local_1_start + local_n1 -1)
+Array<std::complex<float>,3> kslabTransposed_noghost = kslabTransposed(
+    Range(local_1_start, local_1_start + local_n1 - 1),
+    Range(0, nGrid-1),
+    Range(0, k_nz-1)
+);
+
+
+//Exercise3:a simple loop over "kslabTransposed_noghost"
+for(auto it = kslabTransposed_noghost.begin(); it!=kslabTransposed_noghost.end(); ++it){
+    auto pos = it.position();
+    int iX = pos[0], iY = pos[1], iZ = pos[2];
+
+    auto fold=[&](int k){return (k<=iNyquist)?k:(k-nGrid);};
+    int kx=fold(iX), ky=fold(iY), kz=iZ;
+    float kk = std::sqrt(kx*kx + ky*ky + kz*kz);
+
+    // window correction
+    (*it)*= wWin[std::abs(kx)]*wWin[std::abs(ky)]*wWin[kz];
+
+    int ibin;
+    if(bLog){
+        if(kk<=0.f) continue;
+        ibin = int(std::log(kk)/std::log(iNyquist)*nBins);
+    } else {
+        ibin = int(kk/float(iNyquist)*nBins);
+    }
+    if(ibin>0 && ibin<nBins){
+        ak(ibin)+= kk;
+        pk(ibin)+= std::norm(*it);
+        nk(ibin)++;
+    }
+}

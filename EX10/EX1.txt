@@ -1,0 +1,16 @@
+//Exercise1 Added | FFTW_MPI_TRANSPOSED_OUT to skip final transpose
+auto plan = fftwf_mpi_plan_dft_r2c_3d(
+    nGrid, nGrid, nGrid,
+    slab.dataFirst(),
+    reinterpret_cast<fftwf_complex*>(kslab_noghost.dataFirst()),
+    MPI_COMM_WORLD, 
+    FFTW_ESTIMATE | FFTW_MPI_TRANSPOSED_OUT
+);
+
+yyuqi@eiger-ln004:~/Ad_HPC/EX10> diff EX1_modified_output.txt EX1_origin_output.txt 
+12c12
+< 12.4532 7.9437e-06 1025
+---
+> 12.4532 7.94371e-06 1025
+
+In this sense, we think we get the same result of it.

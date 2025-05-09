@@ -1,0 +1,17 @@
+//Exercise4: 2D real->complex plan
+
+fftwf_plan plan_2d = nullptr;
+{
+    int Nx2D = nGrid;
+    int Ny2D = nGrid;
+    // Temporary arrays just to create the plan
+    std::vector<float> slab2D_in ( Nx2D * Ny2D, 0.f );
+    std::vector<std::complex<float>> slab2D_out( Nx2D*(Ny2D/2 +1) );
+
+    plan_2d = fftwf_plan_dft_r2c_2d(
+        Nx2D, Ny2D,
+        slab2D_in.data(),
+        reinterpret_cast<fftwf_complex*>( slab2D_out.data() ),
+        FFTW_ESTIMATE
+    );
+}

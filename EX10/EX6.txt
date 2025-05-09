@@ -1,0 +1,35 @@
+//Exercise6: Pencil 1D complex->complex plan
+  
+fftwf_plan plan_1d = nullptr;
+{
+    constexpr int rank_1d = 1;
+    int n_1d[1] = { nGrid };
+
+    int howmany_1d = int(local_n0_t * k_nz);
+
+    int stride_1d = 1;
+    int dist_1d   = nGrid; 
+
+    // Just to create the plan (dummy arrays):
+    fftwf_complex* tmp_in  = fftwf_alloc_complex(howmany_1d*nGrid);
+    fftwf_complex* tmp_out = fftwf_alloc_complex(howmany_1d*nGrid);
+
+    plan_1d = fftwf_plan_many_dft(
+        rank_1d,
+        n_1d,
+        howmany_1d,
+        tmp_in,
+        n_1d,
+        stride_1d,
+        dist_1d,
+        tmp_out,
+        n_1d,
+        stride_1d,
+        dist_1d,
+        FFTW_FORWARD,
+        FFTW_ESTIMATE
+    );
+
+    fftwf_free(tmp_in);
+    fftwf_free(tmp_out);
+}
