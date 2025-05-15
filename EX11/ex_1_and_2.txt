@@ -1,0 +1,26 @@
+EX1:
+Successfully install blize in BOOST_INCLUDE = -I /capstor/scratch/cscs/yyuqi/spack/opt/spack/linux-sles15-neoverse_v2/gcc-13.3.0/boost-1.86.0-cjrbpcadr24szno4p6uqyssu4n3luu6j/include
+ 
+And Successfully compile the test code:
+
+[daint][yyuqi@daint-ln003 EX11]$ spack load boost
+[daint][yyuqi@daint-ln003 EX11]$ spack find -p boost
+-- linux-sles15-neoverse_v2 / gcc@13.3.0 ------------------------
+boost@1.86.0  /capstor/scratch/cscs/yyuqi/spack/opt/spack/linux-sles15-neoverse_v2/gcc-13.3.0/boost-1.86.0-cjrbpcadr24szno4p6uqyssu4n3luu6j
+==> 1 installed package
+[daint][yyuqi@daint-ln003 EX11]$ make
+g++  -I /capstor/store/cscs/uzh/uzh8/blitz/include/ -I /capstor/scratch/cscs/yyuqi/spack/opt/spack/linux-sles15-neoverse_v2/gcc-13.3.0/boost-1.86.0-cjrbpcadr24szno4p6uqyssu4n3luu6j/include -I/user-environment/linux-sles15-neoverse_v2/gcc-13.3.0/cray-mpich-8.1.30-r5kp4rufpxwrtv5cs3gnxh7hiseci5d6/include -I/user-environment/linux-sles15-neoverse_v2/gcc-13.3.0/fftw-3.3.10-hwuesllvvbqbgvctdojpgyqqo4ed6ckv/include -I /user-environment/linux-sles15-neoverse_v2/gcc-13.3.0/cuda-12.6.0-s7tbmug4jjlhgnp42s5vimkqs2qywpvw/include -fopenmp  -O3 -std=c++17  -c -o assign.o assign.cpp
+g++ -o assign assign.o -fopenmp  -L/user-environment/linux-sles15-neoverse_v2/gcc-13.3.0/cray-mpich-8.1.30-r5kp4rufpxwrtv5cs3gnxh7hiseci5d6/lib -lmpi_gnu_123 -L/user-environment/linux-sles15-neoverse_v2/gcc-13.3.0/fftw-3.3.10-hwuesllvvbqbgvctdojpgyqqo4ed6ckv/lib -lfftw3f -lfftw3f_threads -lfftw3f_mpi
+g++  -I /capstor/store/cscs/uzh/uzh8/blitz/include/ -I /capstor/scratch/cscs/yyuqi/spack/opt/spack/linux-sles15-neoverse_v2/gcc-13.3.0/boost-1.86.0-cjrbpcadr24szno4p6uqyssu4n3luu6j/include -I/user-environment/linux-sles15-neoverse_v2/gcc-13.3.0/cray-mpich-8.1.30-r5kp4rufpxwrtv5cs3gnxh7hiseci5d6/include -I/user-environment/linux-sles15-neoverse_v2/gcc-13.3.0/fftw-3.3.10-hwuesllvvbqbgvctdojpgyqqo4ed6ckv/include -I /user-environment/linux-sles15-neoverse_v2/gcc-13.3.0/cuda-12.6.0-s7tbmug4jjlhgnp42s5vimkqs2qywpvw/include -fopenmp  -O3 -std=c++17  -c -o fft11.o fft11.cpp
+g++ -o fft11 fft11.o -L/user-environment/linux-sles15-neoverse_v2/gcc-13.3.0/fftw-3.3.10-hwuesllvvbqbgvctdojpgyqqo4ed6ckv/lib -lfftw3f -lfftw3f_threads -lfftw3f_mpi  -L/user-environment/linux-sles15-neoverse_v2/gcc-13.3.0/cray-mpich-8.1.30-r5kp4rufpxwrtv5cs3gnxh7hiseci5d6/lib -lmpi_gnu_123 -L/user-environment/linux-sles15-neoverse_v2/gcc-13.3.0/fftw-3.3.10-hwuesllvvbqbgvctdojpgyqqo4ed6ckv/lib -lfftw3f -lfftw3f_threads -lfftw3f_mpi
+
+EX2: 
+Successfully run it and get the same result
+[daint][yyuqi@daint-ln003 EX11]$ make fft11-gpu
+nvcc -Xcompiler -fopenmp -c -o fft11-gpu.o fft11-gpu.cu -I /capstor/store/cscs/uzh/uzh8/blitz/include/ -I /capstor/scratch/cscs/yyuqi/spack/opt/spack/linux-sles15-neoverse_v2/gcc-13.3.0/boost-1.86.0-cjrbpcadr24szno4p6uqyssu4n3luu6j/include -I/user-environment/linux-sles15-neoverse_v2/gcc-13.3.0/cray-mpich-8.1.30-r5kp4rufpxwrtv5cs3gnxh7hiseci5d6/include -I/user-environment/linux-sles15-neoverse_v2/gcc-13.3.0/fftw-3.3.10-hwuesllvvbqbgvctdojpgyqqo4ed6ckv/include -I /user-environment/linux-sles15-neoverse_v2/gcc-13.3.0/cuda-12.6.0-s7tbmug4jjlhgnp42s5vimkqs2qywpvw/include -O3 -std=c++17
+nvcc -Xcompiler -fopenmp -o fft11-gpu fft11-gpu.o -I /capstor/store/cscs/uzh/uzh8/blitz/include/ -I /capstor/scratch/cscs/yyuqi/spack/opt/spack/linux-sles15-neoverse_v2/gcc-13.3.0/boost-1.86.0-cjrbpcadr24szno4p6uqyssu4n3luu6j/include -I/user-environment/linux-sles15-neoverse_v2/gcc-13.3.0/cray-mpich-8.1.30-r5kp4rufpxwrtv5cs3gnxh7hiseci5d6/include -I/user-environment/linux-sles15-neoverse_v2/gcc-13.3.0/fftw-3.3.10-hwuesllvvbqbgvctdojpgyqqo4ed6ckv/include -I /user-environment/linux-sles15-neoverse_v2/gcc-13.3.0/cuda-12.6.0-s7tbmug4jjlhgnp42s5vimkqs2qywpvw/include -L/user-environment/linux-sles15-neoverse_v2/gcc-13.3.0/fftw-3.3.10-hwuesllvvbqbgvctdojpgyqqo4ed6ckv/lib -lfftw3f -lfftw3f_threads -lfftw3f_mpi  -L/user-environment/linux-sles15-neoverse_v2/gcc-13.3.0/cray-mpich-8.1.30-r5kp4rufpxwrtv5cs3gnxh7hiseci5d6/lib -lmpi_gnu_123 -L/user-environment/linux-sles15-neoverse_v2/gcc-13.3.0/fftw-3.3.10-hwuesllvvbqbgvctdojpgyqqo4ed6ckv/lib -lfftw3f -lfftw3f_threads -lfftw3f_mpi -lcufft
+[daint][yyuqi@daint-ln003 EX11]$ ls
+assign  assign.cpp  assign.o  aweights.h  B100.00100  ex1.txt  fft11-gpu  fft11-gpu.cu  fft11-gpu.job  fft11-gpu.o  Makefile  tipsy.h
+[daint][yyuqi@daint-ln003 EX11]$ ./fft11-gpu 
+>>> Out of place FFT match
+>>> In-place FFT match
