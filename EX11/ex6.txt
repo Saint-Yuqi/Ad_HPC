@@ -1,10 +1,8 @@
-/*****************************************************************************
- * Example: Using cufftPlanMany for a single 2D R2C transform (in-place).
- * 
- * The final "Ex4" block replaces the cufftPlan2d(...) call with cufftPlanMany.
- * We still do a single transform (batch=1), but we specify the "embed" (i.e.
- * padded layout) via inembed[] and onembed[].
- *****************************************************************************/
+[daint][yyuqi@daint-ln004 EX11]$ ./fft11-gpu 
+>>> Out of place FFT match
+>>> In-place FFT match
+>>> GPU copy test match
+>>> GPU in-place FFT (PlanMany) match
 
  #include <blitz/array.h>
  #include <fftw3.h>
