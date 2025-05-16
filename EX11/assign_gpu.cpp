@@ -267,4 +267,11 @@ int main(int argc, char* argv[])
     );
 
     // 6) Validate with a CPU inverse transform
-    bool ok = validate_2D(data_2d_
+    bool ok = validate_2D(data_2d_copy, kdata);
+    std::cerr << "GPU 2D FFT validation: " << (ok ? "MATCH" : "MISMATCH") << "\n";
+
+    // Cleanup
+    delete[] data;
+    std::cerr << "Done.\n";
+    return 0;
+}
