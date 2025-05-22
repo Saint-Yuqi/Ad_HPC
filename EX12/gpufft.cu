@@ -54,3 +54,35 @@ void *gpu_allocate_slab(size_t nGrid) {
     return cuda_slab;
 }
 
+//EX3
+// Create a plan to do a batch of 1D C2C transforms for a grid
+cufftHandle gpu_make_plan_1D(int nGrid) {
+    cufftHandle plan;
+    int k_nz = nGrid/2 + 1;
+    int n[] = {nGrid};             // 1D FFT of length N
+    int inembed[] = {nGrid};       // complex input layout (no padding)
+    int onembed[] = {nGrid};       // complex output layout
+    int batch = k_nz;              // number of pencils (one per k_z)
+    int odist = 1;                 // pencils are adjacent in memory
+    int idist = odist;
+    int istride = k_nz;            // Elements of each FFT are k_nz apart
+    int ostride = istride;
+    CUDA_CHECK(cufftPlanMany,(&plan, sizeof(n)/sizeof(n[0]), n,
+                    inembed, istride, idist,
+                    onembed, ostride, odist,
+                    CUFFT_C2C, batch));
+    return plan;
+}
+
+// Execute a batch of 1D C2C transforms on a slice using the given stream
+void gpu_fft_1D_C2C(blitz::Array<std::complex<float>,2> &grid, void *slab,
+                    cufftHandle plan, cudaStream_t stream) {
+    auto data_size = sizeof(cufftComplex) * grid.size();
+    CUDA_CHECK(cudaMemcpyAsync,(slab, grid.dataFirst(), data_size,
+        cudaMemcpyHostToDevice, stream));
+    CUDA_CHECK(cufftSetStream,(plan, stream));
+    CUDA_CHECK(cufftExecC2C,(plan, reinterpret_cast<cufftComplex*>(slab),
+        reinterpret_cast<cufftComplex*>(slab), CUFFT_FORWARD));
+    CUDA_CHECK(cudaMemcpyAsync,(grid.dataFirst(), slab, data_size,
+        cudaMemcpyDeviceToHost, stream));
+}

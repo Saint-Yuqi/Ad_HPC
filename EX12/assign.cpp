@@ -355,13 +355,15 @@ int main(int argc, char *argv[]) {
     //EX2
     cudaStream_t fft_stream;
     cudaStreamCreate(&fft_stream);
+    //EX3
+    auto plan_1d = gpu_make_plan_1D(nGrid);
 
 #else
     auto plan_2d = fftwf_plan_dft_r2c_2d(nGrid, nGrid,
                         slab.dataFirst(),
                         reinterpret_cast<fftwf_complex*>(kslab.dataFirst()),
                         FFTW_ESTIMATE);
-#endif
+
     constexpr int rank_1d = 1;
     int n_1d[rank_1d] = {nGrid};
     int stride_1d = nGrid/2 + 1;
@@ -371,6 +373,7 @@ int main(int argc, char *argv[]) {
                         reinterpret_cast<fftwf_complex*>(kslab.dataFirst()),n_1d,stride_1d,dist_1d,
                         reinterpret_cast<fftwf_complex*>(kslab.dataFirst()),n_1d,stride_1d,dist_1d,
                         FFTW_FORWARD,FFTW_ESTIMATE);
+#endif
 #else
     auto plan = fftwf_mpi_plan_dft_r2c_3d(nGrid,nGrid,nGrid,
             slab.dataFirst(),
@@ -513,10 +516,14 @@ int main(int argc, char *argv[]) {
     // Do the 1D transforms
     if (irank==0) std::cerr << "1D transforms\n";
     for(auto i=0; i<local_n1; ++i) {
-        fftwf_execute_dft(plan_1d,
-                        reinterpret_cast<fftwf_complex*>(&kslab(0,int(local_1_start+i),0)),
-                        reinterpret_cast<fftwf_complex*>(&kslab(0,int(local_1_start+i),0)));
+        // fftwf_execute_dft(plan_1d,
+        //                 reinterpret_cast<fftwf_complex*>(&kslab(0,int(local_1_start+i),0)),
+        //                 reinterpret_cast<fftwf_complex*>(&kslab(0,int(local_1_start+i),0)));
+        //EX3
+        auto slice = kslab(Range::all(), int(local_1_start + i), Range::all());
+        gpu_fft_1D_C2C(slice, gpu_slab, plan_1d, fft_stream);
     }
+    cudaDeviceSynchronize();
 #else
     fftwf_execute(plan);
     fftwf_destroy_plan(plan);
