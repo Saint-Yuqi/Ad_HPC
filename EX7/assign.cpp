@@ -11,7 +11,6 @@
 #include "fftw3.h"
 #include "tipsy.h"
 #include "aweights.h"
-#include <mpi.h>
 using namespace blitz;
 using hrc = std::chrono::high_resolution_clock;
 using duration = std::chrono::duration<double>;
@@ -46,15 +45,6 @@ void assign_mass(Array<float,3> &grid, Array<float,2> &R,Array<float,1> &M) {
 }
 
 int main(int argc, char *argv[]) {
-    int provided;
-    MPI_Init_thread(&argc, &argv, MPI_THREAD_FUNNELED, &provided);
-    if (provided < MPI_THREAD_FUNNELED) {
-    std::cerr << "MPI does not support required threading level!" << std::endl;
-    MPI_Abort(MPI_COMM_WORLD, 1);
-    }
-    int rank, size;
-    MPI_Comm_rank(MPI_COMM_WORLD, &rank);
-    MPI_Comm_size(MPI_COMM_WORLD, &size);
     std::locale::global(std::locale("")); // e.g., LC_ALL=en_GB.UTF-8 or de_CH.UTF-8
     std::cerr.imbue(std::locale()); // e.g., LC_ALL=en_GB.UTF-8
     if (argc<=2) {
@@ -227,7 +217,6 @@ int main(int argc, char *argv[]) {
 
 
 
-    MPI_Finalize();
-    return 0;
+
 
 }
