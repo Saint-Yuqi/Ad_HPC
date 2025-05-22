@@ -2,6 +2,9 @@
 
 #define USE_PLAN_MANY 1
 
+static void *workspace_2d = nullptr;   // Explicit work area for the 2D plan
+static size_t workspace_2d_size = 0;
+
 static void CUDA_Abort(cudaError_t rc, const char *fname, const char *file, int line) {
     fprintf(stderr,"%s error %d in %s(%d)\n%s\n", fname, rc, file, line, cudaGetErrorString(rc));
     exit(1);
@@ -24,10 +27,23 @@ cufftHandle gpu_make_plan_2D(int nGrid) {
     int idist = 2*odist;   // Input distance is in "real"
     int istride = 1;       // Elements of each FFT are adjacent
     int ostride = 1;
-    CUDA_CHECK(cufftPlanMany,(&plan,sizeof(n)/sizeof(n[0]), n,
-                    inembed,istride,idist,
-                    onembed,ostride,odist,
-                    CUFFT_R2C,howmany));
+    // CUDA_CHECK(cufftPlanMany,(&plan,sizeof(n)/sizeof(n[0]), n,
+    //                 inembed,istride,idist,
+    //                 onembed,ostride,odist,
+    //                 CUFFT_R2C,howmany));
+    //EX4
+    CUDA_CHECK(cufftCreate,(&plan));
+    CUDA_CHECK(cufftSetAutoAllocation,(plan, 0));
+    size_t workSize;
+    CUDA_CHECK(cufftMakePlanMany, (plan, 2, n,
+        inembed, istride, idist,
+        onembed, ostride, odist,
+        CUFFT_R2C, howmany, &workSize));
+    if (!workspace_2d) {
+        CUDA_CHECK(cudaMalloc,(&workspace_2d, workSize));
+        workspace_2d_size = workSize;
+    }
+    CUDA_CHECK(cufftSetWorkArea, (plan, workspace_2d));
 #else
     CUDA_CHECK(cufftPlan2d,(&plan,nGrid,nGrid,CUFFT_R2C));
 #endif
@@ -41,6 +57,8 @@ void gpu_fft_2D_R2C(blitz::Array<float,2> &grid, void *slab, cufftHandle plan,
     CUDA_CHECK(cudaMemcpyAsync,(slab, grid.dataFirst(), data_size,
         cudaMemcpyHostToDevice, stream));
     CUDA_CHECK(cufftSetStream,(plan, stream));
+    if (workspace_2d)
+        CUDA_CHECK(cufftSetWorkArea,(plan, workspace_2d));
     CUDA_CHECK(cufftExecR2C,(plan, reinterpret_cast<cufftReal*>(slab),
     reinterpret_cast<cufftComplex*>(slab)));
     CUDA_CHECK(cudaMemcpyAsync,(grid.dataFirst(), slab, data_size,
