@@ -7,7 +7,7 @@
 #include "cufft.h"
 using namespace blitz;
 using std::complex;
-
+#include <cuda_runtime.h>
 #define USE_GPUFFT 1
 #if USE_GPUFFT
 #include "gpufft.h"
@@ -80,7 +80,12 @@ int main() {
     fill_array(rdata2);
 #if USE_GPUFFT
     auto plan3 = gpu_make_plan_2D(n);
-    gpu_fft_2D_R2C(rdata2,cuda_slab,plan3);
+    //gpu_fft_2D_R2C(rdata2,cuda_slab,plan3);
+    cudaStream_t stream;
+    cudaStreamCreate(&stream);
+    gpu_fft_2D_R2C(rdata2, cuda_slab, plan3, stream);
+    cudaDeviceSynchronize();
+    cudaStreamDestroy(stream);
 #else
     cufftHandle plan3;
     cufftPlan2d(&plan3,n,n,CUFFT_R2C);

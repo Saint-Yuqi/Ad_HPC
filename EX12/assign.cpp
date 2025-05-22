@@ -574,6 +574,7 @@ int main(int argc, char *argv[]) {
     //EX1 & 2
 #if USE_GPU
     cudaStreamDestroy(fft_stream);
+    cudaFree(gpu_slab);
     cudaHostUnregister(slab_data);
 #endif
     MPI_Finalize();
