@@ -27,8 +27,6 @@ using duration = std::chrono::duration<double>;
 
 #ifdef USE_GPU
 #include "gpufft.h"
-//EX1
-#include <cuda_runtime.h>
 #endif
 
 // Manual transpose requires that we use transposed order
@@ -313,17 +311,6 @@ int main(int argc, char *argv[]) {
 
     // Create the local slabs
     float *slab_data = new (std:: align_val_t (64)) float [float_count]; // 512-bit alignment
-
-//EX1    
-#if USE_GPU
-    // Pin the portion of the slab that will be transferred to the GPU.
-    // cudaHostRegisterPortable allows the pinned memory to be visible to
-    // any CUDA context, which is required when running on different GPUs.
-    cudaHostRegister(slab_data,
-                     sizeof(float)*local_n0*nGrid*2*k_nz,
-                     cudaHostRegisterPortable);
-#endif
-
     Array<float,3> raw_slab(slab_data,shape(slab_count,nGrid,2*k_nz),deleteDataWhenDone);
     raw_slab.reindexSelf(TinyVector<int,3>(local_0_start,0,0)); // Change the start index of the first dimension
     Array<float,3> slab(raw_slab(Range(local_0_start,local_0_start+local_n0-1),Range(0,nGrid-1),Range(0,nGrid-1)));
@@ -352,10 +339,6 @@ int main(int argc, char *argv[]) {
 #if USE_GPU
     auto plan_2d = gpu_make_plan_2D(nGrid);
     auto gpu_slab = gpu_allocate_slab(nGrid);
-    //EX2
-    cudaStream_t fft_stream;
-    cudaStreamCreate(&fft_stream);
-
 #else
     auto plan_2d = fftwf_plan_dft_r2c_2d(nGrid, nGrid,
                         slab.dataFirst(),
@@ -491,21 +474,14 @@ int main(int argc, char *argv[]) {
     if (irank==0) std::cerr << "2D transforms\n";
     for(auto i=0; i<local_n0; ++i) {
 #if USE_GPU
-	// Array<float,2> slice = slab(int(local_0_start+i),Range::all(),Range::all());
-	// gpu_fft_2D_R2C(slice,gpu_slab,plan_2d);
-    //EX2
-    Array<float,2> slice = slab(int(local_0_start+i),Range::all(),Range::all());
-    gpu_fft_2D_R2C(slice, gpu_slab, plan_2d, fft_stream);
+	Array<float,2> slice = slab(int(local_0_start+i),Range::all(),Range::all());
+	gpu_fft_2D_R2C(slice,gpu_slab,plan_2d);
 #else
         fftwf_execute_dft_r2c(plan_2d,
                         reinterpret_cast<float*>(&slab(int(local_0_start+i),0,0)),
                         reinterpret_cast<fftwf_complex*>(&slab(int(local_0_start+i),0,0)));
 #endif
     }
-//EX2    
-#if USE_GPU
-    cudaDeviceSynchronize();
-#endif
     // Do the transpose
     if (irank==0) std::cerr << "Global transpose\n";
     fftwf_execute_r2r(plan_transform,slab.dataFirst(),slab.dataFirst());
@@ -571,10 +547,6 @@ int main(int argc, char *argv[]) {
             }
         }
     }
-    //EX1 & 2
-#if USE_GPU
-    cudaStreamDestroy(fft_stream);
-    cudaHostUnregister(slab_data);
-#endif
+
     MPI_Finalize();
 }

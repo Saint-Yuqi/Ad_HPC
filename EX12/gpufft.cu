@@ -34,12 +34,13 @@ cufftHandle gpu_make_plan_2D(int nGrid) {
     return plan;
 }
 
-void gpu_fft_2D_R2C(blitz::Array<float,2> &grid,void *slab,cufftHandle plan) {
+//EX2
+void gpu_fft_2D_R2C(blitz::Array<float,2> &grid,void *slab,cufftHandle plan,cudaStream_t stream ) {
     auto data_size = sizeof(cufftComplex)*grid.rows()*(grid.cols()/2+1);
-    CUDA_CHECK(cudaMemcpy,(slab, grid.dataFirst(), data_size, cudaMemcpyHostToDevice));
-    CUDA_CHECK(cufftExecR2C,(plan,reinterpret_cast<cufftReal*>(slab),reinterpret_cast<cufftComplex*>(slab)));
-    CUDA_CHECK(cudaMemcpy,(grid.dataFirst(), slab, data_size, cudaMemcpyDeviceToHost));
-    CUDA_CHECK(cudaDeviceSynchronize,());
+    CUDA_CHECK(cudaMemcpyAsync,(slab, grid.dataFirst(), data_size, cudaMemcpyHostToDevice, stream));
+    CUDA_CHECK(cufftSetStream,(plan, stream));
+    CUDA_CHECK(cufftExecR2C,(plan, reinterpret_cast<cufftReal*>(slab),reinterpret_cast<cufftComplex*>(slab)));
+    CUDA_CHECK(cudaMemcpyAsync,(grid.dataFirst(), slab, data_size, cudaMemcpyDeviceToHost, stream));
 }
 
 void *gpu_allocate_slab(size_t nGrid) {
