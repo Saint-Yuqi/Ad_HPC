@@ -356,8 +356,14 @@ int main(int argc, char *argv[]) {
     // cudaStream_t fft_stream;
     // cudaStreamCreate(&fft_stream);
     //EX 3 & 5
-    size_t workSize;
-    auto plan_2d = gpu_make_plan_2D(nGrid, workSize);
+    // size_t workSize;
+    // auto plan_2d = gpu_make_plan_2D(nGrid, workSize);
+    //EX 6
+    size_t workSize2d;
+    auto plan_2d = gpu_make_plan_2D(nGrid, workSize2d);
+    size_t workSize1d;
+    auto plan_1d = gpu_make_plan_1D(nGrid, workSize1d);
+    size_t workSize = std::max(workSize2d, workSize1d);
     constexpr int NUM_STREAMS = 2;
     std::vector<void*> gpu_slabs(NUM_STREAMS);
     std::vector<void*> work_areas(NUM_STREAMS);
@@ -367,7 +373,7 @@ int main(int argc, char *argv[]) {
         cudaMalloc(&work_areas[s], workSize);
         cudaStreamCreate(&fft_streams[s]);
     }
-    auto plan_1d = gpu_make_plan_1D(nGrid);
+    //auto plan_1d = gpu_make_plan_1D(nGrid);
 
 #else
     auto plan_2d = fftwf_plan_dft_r2c_2d(nGrid, nGrid,
@@ -541,11 +547,16 @@ int main(int argc, char *argv[]) {
         //gpu_fft_1D_C2C(slice, gpu_slab, plan_1d, fft_stream);
 
         //EX5
-        gpu_fft_1D_C2C(slice, gpu_slabs[0], plan_1d, fft_streams[0]);
+        //gpu_fft_1D_C2C(slice, gpu_slabs[0], plan_1d, fft_streams[0]);
+        //EX6
+        int s = i % NUM_STREAMS;
+        gpu_fft_1D_C2C(slice, gpu_slabs[s], plan_1d, work_areas[s], fft_streams[s]);
     }
     //cudaDeviceSynchronize();
     //EX5
-    cudaStreamSynchronize(fft_streams[0]);
+    //cudaStreamSynchronize(fft_streams[0]);
+    //EX6
+    for(int s=0; s<NUM_STREAMS; ++s) cudaStreamSynchronize(fft_streams[s]);
 #else
     fftwf_execute(plan);
     fftwf_destroy_plan(plan);
