@@ -79,13 +79,22 @@ int main() {
     // GPU in-place: we reuse rdata2 -> kdata2
     fill_array(rdata2);
 #if USE_GPUFFT
-    auto plan3 = gpu_make_plan_2D(n);
+    //auto plan3 = gpu_make_plan_2D(n);
     //gpu_fft_2D_R2C(rdata2,cuda_slab,plan3);
+    //EX5
+    size_t workSize;
+    auto plan3 = gpu_make_plan_2D(n, workSize);
+    void *workspace;
+    cudaMalloc(&workspace, workSize);
     cudaStream_t stream;
     cudaStreamCreate(&stream);
-    gpu_fft_2D_R2C(rdata2, cuda_slab, plan3, stream);
-    cudaDeviceSynchronize();
+    // gpu_fft_2D_R2C(rdata2, cuda_slab, plan3, stream);
+    // cudaDeviceSynchronize();
+    //EX5
+    gpu_fft_2D_R2C(rdata2, cuda_slab, plan3, workspace, stream);
+    cudaStreamSynchronize(stream);
     cudaStreamDestroy(stream);
+    cudaFree(workspace);
 #else
     cufftHandle plan3;
     cufftPlan2d(&plan3,n,n,CUFFT_R2C);

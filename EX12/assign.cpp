@@ -350,12 +350,23 @@ int main(int argc, char *argv[]) {
                         MPI_COMM_WORLD,0);
 
 #if USE_GPU
-    auto plan_2d = gpu_make_plan_2D(nGrid);
-    auto gpu_slab = gpu_allocate_slab(nGrid);
-    //EX2
-    cudaStream_t fft_stream;
-    cudaStreamCreate(&fft_stream);
-    //EX3
+    // auto plan_2d = gpu_make_plan_2D(nGrid);
+    // auto gpu_slab = gpu_allocate_slab(nGrid);
+    // //EX2
+    // cudaStream_t fft_stream;
+    // cudaStreamCreate(&fft_stream);
+    //EX 3 & 5
+    size_t workSize;
+    auto plan_2d = gpu_make_plan_2D(nGrid, workSize);
+    constexpr int NUM_STREAMS = 2;
+    std::vector<void*> gpu_slabs(NUM_STREAMS);
+    std::vector<void*> work_areas(NUM_STREAMS);
+    std::vector<cudaStream_t> fft_streams(NUM_STREAMS);
+    for(int s=0; s<NUM_STREAMS; ++s) {
+        gpu_slabs[s] = gpu_allocate_slab(nGrid);
+        cudaMalloc(&work_areas[s], workSize);
+        cudaStreamCreate(&fft_streams[s]);
+    }
     auto plan_1d = gpu_make_plan_1D(nGrid);
 
 #else
@@ -497,8 +508,12 @@ int main(int argc, char *argv[]) {
 	// Array<float,2> slice = slab(int(local_0_start+i),Range::all(),Range::all());
 	// gpu_fft_2D_R2C(slice,gpu_slab,plan_2d);
     //EX2
+    // Array<float,2> slice = slab(int(local_0_start+i),Range::all(),Range::all());
+    // gpu_fft_2D_R2C(slice, gpu_slab, plan_2d, fft_stream);
+    //EX5
+    int s = i % NUM_STREAMS;
     Array<float,2> slice = slab(int(local_0_start+i),Range::all(),Range::all());
-    gpu_fft_2D_R2C(slice, gpu_slab, plan_2d, fft_stream);
+    gpu_fft_2D_R2C(slice, gpu_slabs[s], plan_2d, work_areas[s], fft_streams[s]);
 #else
         fftwf_execute_dft_r2c(plan_2d,
                         reinterpret_cast<float*>(&slab(int(local_0_start+i),0,0)),
@@ -507,7 +522,9 @@ int main(int argc, char *argv[]) {
     }
 //EX2    
 #if USE_GPU
-    cudaDeviceSynchronize();
+    //cudaDeviceSynchronize();
+    //EX5
+    for(int s=0; s<NUM_STREAMS; ++s) cudaStreamSynchronize(fft_streams[s]);
 #endif
     // Do the transpose
     if (irank==0) std::cerr << "Global transpose\n";
@@ -521,9 +538,14 @@ int main(int argc, char *argv[]) {
         //                 reinterpret_cast<fftwf_complex*>(&kslab(0,int(local_1_start+i),0)));
         //EX3
         auto slice = kslab(Range::all(), int(local_1_start + i), Range::all());
-        gpu_fft_1D_C2C(slice, gpu_slab, plan_1d, fft_stream);
+        //gpu_fft_1D_C2C(slice, gpu_slab, plan_1d, fft_stream);
+
+        //EX5
+        gpu_fft_1D_C2C(slice, gpu_slabs[0], plan_1d, fft_streams[0]);
     }
-    cudaDeviceSynchronize();
+    //cudaDeviceSynchronize();
+    //EX5
+    cudaStreamSynchronize(fft_streams[0]);
 #else
     fftwf_execute(plan);
     fftwf_destroy_plan(plan);
@@ -580,8 +602,14 @@ int main(int argc, char *argv[]) {
     }
     //EX1 & 2
 #if USE_GPU
-    cudaStreamDestroy(fft_stream);
-    cudaFree(gpu_slab);
+    // cudaStreamDestroy(fft_stream);
+    // cudaFree(gpu_slab);
+    //EX5
+    for(int s=0; s<NUM_STREAMS; ++s) {
+        cudaStreamDestroy(fft_streams[s]);
+        cudaFree(gpu_slabs[s]);
+        cudaFree(work_areas[s]);
+    }
     cudaHostUnregister(slab_data);
 #endif
     MPI_Finalize();
