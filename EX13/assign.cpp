@@ -27,7 +27,6 @@ using duration = std::chrono::duration<double>;
 
 #ifdef USE_GPU
 #include "gpufft.h"
-//EX1
 #include <cuda_runtime.h>
 #endif
 
@@ -313,8 +312,7 @@ int main(int argc, char *argv[]) {
 
     // Create the local slabs
     float *slab_data = new (std:: align_val_t (64)) float [float_count]; // 512-bit alignment
-
-//EX1    
+  
 #if USE_GPU
     // Pin the portion of the slab that will be transferred to the GPU.
     // cudaHostRegisterPortable allows the pinned memory to be visible to
@@ -352,13 +350,10 @@ int main(int argc, char *argv[]) {
 #if USE_GPU
     // auto plan_2d = gpu_make_plan_2D(nGrid);
     // auto gpu_slab = gpu_allocate_slab(nGrid);
-    // //EX2
     // cudaStream_t fft_stream;
     // cudaStreamCreate(&fft_stream);
-    //EX 3 & 5
     // size_t workSize;
     // auto plan_2d = gpu_make_plan_2D(nGrid, workSize);
-    //EX 6
     size_t workSize2d;
     auto plan_2d = gpu_make_plan_2D(nGrid, workSize2d);
     size_t workSize1d;
@@ -513,10 +508,8 @@ int main(int argc, char *argv[]) {
 #if USE_GPU
 	// Array<float,2> slice = slab(int(local_0_start+i),Range::all(),Range::all());
 	// gpu_fft_2D_R2C(slice,gpu_slab,plan_2d);
-    //EX2
     // Array<float,2> slice = slab(int(local_0_start+i),Range::all(),Range::all());
     // gpu_fft_2D_R2C(slice, gpu_slab, plan_2d, fft_stream);
-    //EX5
     int s = i % NUM_STREAMS;
     Array<float,2> slice = slab(int(local_0_start+i),Range::all(),Range::all());
     gpu_fft_2D_R2C(slice, gpu_slabs[s], plan_2d, work_areas[s], fft_streams[s]);
@@ -526,10 +519,8 @@ int main(int argc, char *argv[]) {
                         reinterpret_cast<fftwf_complex*>(&slab(int(local_0_start+i),0,0)));
 #endif
     }
-//EX2    
 #if USE_GPU
     //cudaDeviceSynchronize();
-    //EX5
     for(int s=0; s<NUM_STREAMS; ++s) cudaStreamSynchronize(fft_streams[s]);
 #endif
     // Do the transpose
@@ -542,20 +533,15 @@ int main(int argc, char *argv[]) {
         // fftwf_execute_dft(plan_1d,
         //                 reinterpret_cast<fftwf_complex*>(&kslab(0,int(local_1_start+i),0)),
         //                 reinterpret_cast<fftwf_complex*>(&kslab(0,int(local_1_start+i),0)));
-        //EX3
         auto slice = kslab(Range::all(), int(local_1_start + i), Range::all());
         //gpu_fft_1D_C2C(slice, gpu_slab, plan_1d, fft_stream);
 
-        //EX5
         //gpu_fft_1D_C2C(slice, gpu_slabs[0], plan_1d, fft_streams[0]);
-        //EX6
         int s = i % NUM_STREAMS;
         gpu_fft_1D_C2C(slice, gpu_slabs[s], plan_1d, work_areas[s], fft_streams[s]);
     }
     //cudaDeviceSynchronize();
-    //EX5
     //cudaStreamSynchronize(fft_streams[0]);
-    //EX6
     for(int s=0; s<NUM_STREAMS; ++s) cudaStreamSynchronize(fft_streams[s]);
 #else
     fftwf_execute(plan);
@@ -611,11 +597,10 @@ int main(int argc, char *argv[]) {
             }
         }
     }
-    //EX1 & 2
+
 #if USE_GPU
     // cudaStreamDestroy(fft_stream);
     // cudaFree(gpu_slab);
-    //EX5
     for(int s=0; s<NUM_STREAMS; ++s) {
         cudaStreamDestroy(fft_streams[s]);
         cudaFree(gpu_slabs[s]);

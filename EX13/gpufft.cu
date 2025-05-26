@@ -18,7 +18,6 @@ static void CUDA_Abort(cufftResult rc, const char *fname, const char *file, int 
 // Create a plan to do a 2D transform for the given grid (in-place)
 // cufftHandle gpu_make_plan_2D(int nGrid) {
 //     cufftHandle plan;
-//EX5
 cufftHandle gpu_make_plan_2D(int nGrid, size_t &workSize) {
     cufftHandle plan;
 #if USE_PLAN_MANY
@@ -34,7 +33,6 @@ cufftHandle gpu_make_plan_2D(int nGrid, size_t &workSize) {
     //                 inembed,istride,idist,
     //                 onembed,ostride,odist,
     //                 CUFFT_R2C,howmany));
-    //EX4
     CUDA_CHECK(cufftCreate,(&plan));
     CUDA_CHECK(cufftSetAutoAllocation,(plan, 0));
     //size_t workSize;
@@ -54,7 +52,6 @@ cufftHandle gpu_make_plan_2D(int nGrid, size_t &workSize) {
     return plan;
 }
 
-//EX2 
 // void gpu_fft_2D_R2C(blitz::Array<float,2> &grid, void *slab, cufftHandle plan,
 //                     cudaStream_t stream) {
 //     auto data_size = sizeof(cufftComplex)*grid.rows()*(grid.cols()/2+1);
@@ -68,7 +65,6 @@ cufftHandle gpu_make_plan_2D(int nGrid, size_t &workSize) {
 //     CUDA_CHECK(cudaMemcpyAsync,(grid.dataFirst(), slab, data_size,
 //         cudaMemcpyDeviceToHost, stream));
 // }
-//EX5
 void gpu_fft_2D_R2C(blitz::Array<float,2> &grid, void *slab, cufftHandle plan, void *workspace, cudaStream_t stream) {
     auto data_size = sizeof(cufftComplex)*grid.rows()*(grid.cols()/2+1);
     CUDA_CHECK(cudaMemcpyAsync,(slab, grid.dataFirst(), data_size,
@@ -89,10 +85,8 @@ void *gpu_allocate_slab(size_t nGrid) {
     return cuda_slab;
 }
 
-//EX3
 // Create a plan to do a batch of 1D C2C transforms for a grid
 // cufftHandle gpu_make_plan_1D(int nGrid) {
-//EX6
 cufftHandle gpu_make_plan_1D(int nGrid, size_t &workSize) {
     cufftHandle plan;
     int k_nz = nGrid/2 + 1;
@@ -116,7 +110,6 @@ cufftHandle gpu_make_plan_1D(int nGrid, size_t &workSize) {
                     CUFFT_C2C, batch, &workSize));
     return plan;
 }
-//EX6
 // Execute a batch of 1D C2C transforms on a slice using the given stream
 void gpu_fft_1D_C2C(blitz::Array<std::complex<float>,2> &grid, void *slab,
                     cufftHandle plan, void *workspace, cudaStream_t stream) {

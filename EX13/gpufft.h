@@ -4,13 +4,11 @@
 
 // cufftHandle gpu_make_plan_2D(int nGrid);
 // void gpu_fft_2D_R2C(blitz::Array<float,2> &grid,void *slab,cufftHandle plan, cudaStream_t stream);
-//EX5
 cufftHandle gpu_make_plan_2D(int nGrid, size_t &workSize);
 void gpu_fft_2D_R2C(blitz::Array<float,2> &grid, void *slab,
                     cufftHandle plan, void *workspace,
                     cudaStream_t stream);
 void *gpu_allocate_slab(size_t nGrid);
-//EX6
 //cufftHandle gpu_make_plan_1D(int nGrid);
 cufftHandle gpu_make_plan_1D(int nGrid, size_t &workSize);
 
