@@ -22,8 +22,8 @@ LDLIBS = $(LDMPICH) $(LDFFTW)
 
 all	: assign fft11 fft11-gpu
 
-assign	: assign.o gpufft.o tipsy.h Makefile
-	$(CXX) -o assign assign.o gpufft.o $(LDOMP) $(LDFFTW) $(LDFLAGS) $(LDLIBS) $(CUDA_LIB) $(CUDA_RT_LIB) -lcufft -lcudart
+assign	: assign.o gpufft.o delta.o tipsy.h Makefile
+	$(CXX) -o assign assign.o gpufft.o delta.o $(LDOMP) $(LDFFTW) $(LDFLAGS) $(LDLIBS) $(CUDA_LIB) $(CUDA_RT_LIB) -lcufft -lcudart
 
 assign.o	: assign.cpp tipsy.h aweights.h Makefile
 
@@ -42,6 +42,9 @@ fft11-gpu.o	: fft11-gpu.cu
 gpufft.o : gpufft.cu gpufft.h
 	nvcc -c -o gpufft.o gpufft.cu $(INCLUDES) -O3 -std=c++17
 
+delta.o : delta.cu delta.h
+	nvcc -c -o delta.o delta.cu $(INCLUDES) -O3 -std=c++17
+
 
 clean:
-	rm -f assign assign.o fft11 fft11.o fft11-gpu fft11-gpu.o gpufft.o
+	rm -f assign assign.o fft11 fft11.o fft11-gpu fft11-gpu.o gpufft.o delta.o
