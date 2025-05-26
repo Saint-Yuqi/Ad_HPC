@@ -2,6 +2,8 @@
 #include <stdio.h>
 
 
+
+
 //EX3
 __global__
 void delta_kernel(float *slab,
@@ -23,6 +25,34 @@ void delta_kernel(float *slab,
         slab[idx] = v * inv_nGrid3;            
     }
 }
+//EX4
+void compute_delta(float       *d_slab,
+    int          nGrid,
+    float        inv_rhoBar,
+    cudaStream_t stream)
+{
+    const float inv_rho    = inv_rhoBar;
+    const float inv_nGrid3 = 1.0f / float(nGrid * nGrid * nGrid);
+    const int   embed      = 2 * (nGrid/2 + 1);
+
+    /* 32×32 = 1024-thread blocks (fits CUDA limit) */
+    constexpr int blockXY = 32;
+    dim3 dimBlock(blockXY, blockXY, 1);
+
+    /* number of blocks per dimension, rounded up */
+    int nBlocks = (nGrid + blockXY - 1) / blockXY;
+    dim3 dimGrid(nBlocks, nBlocks, 1);
+
+
+    delta_kernel<<<dimGrid, dimBlock, 0, stream>>>(d_slab,
+                                        nGrid,
+                                        embed,
+                                        inv_rho,
+                                        inv_nGrid3);
+}
+
+
+
 //EX2
 // __global__
 // void delta_kernel(float *data,

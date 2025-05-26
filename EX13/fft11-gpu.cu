@@ -81,7 +81,6 @@ int main() {
 #if USE_GPUFFT
     //auto plan3 = gpu_make_plan_2D(n);
     //gpu_fft_2D_R2C(rdata2,cuda_slab,plan3);
-    //EX5
     size_t workSize;
     auto plan3 = gpu_make_plan_2D(n, workSize);
     void *workspace;
@@ -90,8 +89,8 @@ int main() {
     cudaStreamCreate(&stream);
     // gpu_fft_2D_R2C(rdata2, cuda_slab, plan3, stream);
     // cudaDeviceSynchronize();
-    //EX5
-    gpu_fft_2D_R2C(rdata2, cuda_slab, plan3, workspace, stream);
+    //gpu_fft_2D_R2C(rdata2, cuda_slab, plan3, workspace, stream);
+    gpu_fft_2D_R2C(rdata2, cuda_slab, plan3, workspace, 1.0f, stream);
     cudaStreamSynchronize(stream);
     cudaStreamDestroy(stream);
     cudaFree(workspace);

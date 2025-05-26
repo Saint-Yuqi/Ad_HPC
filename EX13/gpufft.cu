@@ -65,7 +65,7 @@ cufftHandle gpu_make_plan_2D(int nGrid, size_t &workSize) {
 //     CUDA_CHECK(cudaMemcpyAsync,(grid.dataFirst(), slab, data_size,
 //         cudaMemcpyDeviceToHost, stream));
 // }
-void gpu_fft_2D_R2C(blitz::Array<float,2> &grid, void *slab, cufftHandle plan, void *workspace, cudaStream_t stream) {
+void gpu_fft_2D_R2C(blitz::Array<float,2> &grid, void *slab, cufftHandle plan, void *workspace,float diRhoBar, cudaStream_t stream) {
     auto data_size = sizeof(cufftComplex)*grid.rows()*(grid.cols()/2+1);
     CUDA_CHECK(cudaMemcpyAsync,(slab, grid.dataFirst(), data_size,
         cudaMemcpyHostToDevice, stream));

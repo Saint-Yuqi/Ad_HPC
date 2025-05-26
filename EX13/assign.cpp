@@ -494,9 +494,9 @@ int main(int argc, char *argv[]) {
     float total_mass;
     MPI_Allreduce(&local_mass, &total_mass, 1, MPI_FLOAT, MPI_SUM, MPI_COMM_WORLD);
     float diRhoBar = ((1.0f*nGrid*nGrid*nGrid)/total_mass);
-    slab = slab * diRhoBar - 1.0f;
+    // slab = slab * diRhoBar - 1.0f;
     // Correct for FFT normalization
-    slab /= (nGrid*nGrid*nGrid);
+    // slab /= (nGrid*nGrid*nGrid);
 
     // Calculate the FFT
     t0 = hrc::now();
@@ -512,7 +512,8 @@ int main(int argc, char *argv[]) {
     // gpu_fft_2D_R2C(slice, gpu_slab, plan_2d, fft_stream);
     int s = i % NUM_STREAMS;
     Array<float,2> slice = slab(int(local_0_start+i),Range::all(),Range::all());
-    gpu_fft_2D_R2C(slice, gpu_slabs[s], plan_2d, work_areas[s], fft_streams[s]);
+    // gpu_fft_2D_R2C(slice, gpu_slabs[s], plan_2d, work_areas[s], fft_streams[s]);
+    gpu_fft_2D_R2C(slice, gpu_slabs[s], plan_2d, work_areas[s], diRhoBar, fft_streams[s]);
 #else
         fftwf_execute_dft_r2c(plan_2d,
                         reinterpret_cast<float*>(&slab(int(local_0_start+i),0,0)),
