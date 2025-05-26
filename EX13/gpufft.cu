@@ -1,0 +1,133 @@
+#include "gpufft.h"
+
+#define USE_PLAN_MANY 1
+
+// static void *workspace_2d = nullptr;   // Explicit work area for the 2D plan
+// static size_t workspace_2d_size = 0;
+
+static void CUDA_Abort(cudaError_t rc, const char *fname, const char *file, int line) {
+    fprintf(stderr,"%s error %d in %s(%d)\n%s\n", fname, rc, file, line, cudaGetErrorString(rc));
+    exit(1);
+}
+static void CUDA_Abort(cufftResult rc, const char *fname, const char *file, int line) {
+    fprintf(stderr,"%s error %d in %s(%d)\n", fname, rc, file, line);
+    exit(1);
+}
+#define CUDA_CHECK(f,a) {auto rc = (f)a; if (rc!=0) CUDA_Abort(rc,#f,__FILE__,__LINE__);}
+
+// Create a plan to do a 2D transform for the given grid (in-place)
+// cufftHandle gpu_make_plan_2D(int nGrid) {
+//     cufftHandle plan;
+//EX5
+cufftHandle gpu_make_plan_2D(int nGrid, size_t &workSize) {
+    cufftHandle plan;
+#if USE_PLAN_MANY
+    int n[] = {nGrid,nGrid};       // 2D FFT of length NxN
+    int inembed[] = {nGrid,2*(nGrid/2+1)};
+    int onembed[] = {nGrid,nGrid/2+1};
+    int howmany = 1;
+    int odist = onembed[0] * onembed[1]; // Output distance is in "complex"
+    int idist = 2*odist;   // Input distance is in "real"
+    int istride = 1;       // Elements of each FFT are adjacent
+    int ostride = 1;
+    // CUDA_CHECK(cufftPlanMany,(&plan,sizeof(n)/sizeof(n[0]), n,
+    //                 inembed,istride,idist,
+    //                 onembed,ostride,odist,
+    //                 CUFFT_R2C,howmany));
+    //EX4
+    CUDA_CHECK(cufftCreate,(&plan));
+    CUDA_CHECK(cufftSetAutoAllocation,(plan, 0));
+    //size_t workSize;
+
+    CUDA_CHECK(cufftMakePlanMany, (plan, 2, n,
+        inembed, istride, idist,
+        onembed, ostride, odist,
+        CUFFT_R2C, howmany, &workSize));
+    // if (!workspace_2d) {
+    //     CUDA_CHECK(cudaMalloc,(&workspace_2d, workSize));
+    //     workspace_2d_size = workSize;
+    // }
+    // CUDA_CHECK(cufftSetWorkArea, (plan, workspace));
+#else
+    CUDA_CHECK(cufftPlan2d,(&plan,nGrid,nGrid,CUFFT_R2C));
+#endif
+    return plan;
+}
+
+//EX2 
+// void gpu_fft_2D_R2C(blitz::Array<float,2> &grid, void *slab, cufftHandle plan,
+//                     cudaStream_t stream) {
+//     auto data_size = sizeof(cufftComplex)*grid.rows()*(grid.cols()/2+1);
+//     CUDA_CHECK(cudaMemcpyAsync,(slab, grid.dataFirst(), data_size,
+//         cudaMemcpyHostToDevice, stream));
+//     CUDA_CHECK(cufftSetStream,(plan, stream));
+//     if (workspace_2d)
+//         CUDA_CHECK(cufftSetWorkArea,(plan, workspace_2d));
+//     CUDA_CHECK(cufftExecR2C,(plan, reinterpret_cast<cufftReal*>(slab),
+//     reinterpret_cast<cufftComplex*>(slab)));
+//     CUDA_CHECK(cudaMemcpyAsync,(grid.dataFirst(), slab, data_size,
+//         cudaMemcpyDeviceToHost, stream));
+// }
+//EX5
+void gpu_fft_2D_R2C(blitz::Array<float,2> &grid, void *slab, cufftHandle plan, void *workspace, cudaStream_t stream) {
+    auto data_size = sizeof(cufftComplex)*grid.rows()*(grid.cols()/2+1);
+    CUDA_CHECK(cudaMemcpyAsync,(slab, grid.dataFirst(), data_size,
+        cudaMemcpyHostToDevice, stream));
+    CUDA_CHECK(cufftSetStream,(plan, stream));
+    if (workspace)
+        CUDA_CHECK(cufftSetWorkArea,(plan, workspace));
+    CUDA_CHECK(cufftExecR2C,(plan, reinterpret_cast<cufftReal*>(slab),
+        reinterpret_cast<cufftComplex*>(slab)));
+    CUDA_CHECK(cudaMemcpyAsync,(grid.dataFirst(), slab, data_size,
+        cudaMemcpyDeviceToHost, stream));
+}
+
+void *gpu_allocate_slab(size_t nGrid) {
+    void *cuda_slab;
+    auto slab_size = sizeof(cufftComplex)*nGrid*(nGrid/2+1);
+    CUDA_CHECK(cudaMalloc,((void**)&cuda_slab, slab_size));
+    return cuda_slab;
+}
+
+//EX3
+// Create a plan to do a batch of 1D C2C transforms for a grid
+// cufftHandle gpu_make_plan_1D(int nGrid) {
+//EX6
+cufftHandle gpu_make_plan_1D(int nGrid, size_t &workSize) {
+    cufftHandle plan;
+    int k_nz = nGrid/2 + 1;
+    int n[] = {nGrid};             // 1D FFT of length N
+    int inembed[] = {nGrid};       // complex input layout (no padding)
+    int onembed[] = {nGrid};       // complex output layout
+    int batch = k_nz;              // number of pencils (one per k_z)
+    int odist = 1;                 // pencils are adjacent in memory
+    int idist = odist;
+    int istride = k_nz;            // Elements of each FFT are k_nz apart
+    int ostride = istride;
+    // CUDA_CHECK(cufftPlanMany,(&plan, sizeof(n)/sizeof(n[0]), n,
+    //                 inembed, istride, idist,
+    //                 onembed, ostride, odist,
+    //                 CUFFT_C2C, batch));
+    CUDA_CHECK(cufftCreate,(&plan));
+    CUDA_CHECK(cufftSetAutoAllocation,(plan,0));
+    CUDA_CHECK(cufftMakePlanMany,(plan, sizeof(n)/sizeof(n[0]), n,
+                    inembed, istride, idist,
+                    onembed, ostride, odist,
+                    CUFFT_C2C, batch, &workSize));
+    return plan;
+}
+//EX6
+// Execute a batch of 1D C2C transforms on a slice using the given stream
+void gpu_fft_1D_C2C(blitz::Array<std::complex<float>,2> &grid, void *slab,
+                    cufftHandle plan, void *workspace, cudaStream_t stream) {
+    auto data_size = sizeof(cufftComplex) * grid.size();
+    CUDA_CHECK(cudaMemcpyAsync,(slab, grid.dataFirst(), data_size,
+        cudaMemcpyHostToDevice, stream));
+    CUDA_CHECK(cufftSetStream,(plan, stream));
+    if (workspace)
+        CUDA_CHECK(cufftSetWorkArea,(plan, workspace));
+    CUDA_CHECK(cufftExecC2C,(plan, reinterpret_cast<cufftComplex*>(slab),
+        reinterpret_cast<cufftComplex*>(slab), CUFFT_FORWARD));
+    CUDA_CHECK(cudaMemcpyAsync,(grid.dataFirst(), slab, data_size,
+        cudaMemcpyDeviceToHost, stream));
+}
