@@ -67,15 +67,15 @@ void compute_delta(float       *d_slab,
     /* number of blocks per dimension, rounded up */
     int nBlocks = (nGrid + blockXY - 1) / blockXY;
     //dim3 dimGrid(nBlocks, nBlocks, 1);
-    // constexpr int blockStride = 10;    // number of block rows in y-direction
+    constexpr int blockStride = 10;    // number of block rows in y-direction
     // constexpr int blockStride = 9;    // number of block rows in y-direction
     // constexpr int blockStride = 8;    // number of block rows in y-direction
     // constexpr int blockStride = 7;    // number of block rows in y-direction
     // constexpr int blockStride = 6;    // number of block rows in y-direction
     // constexpr int blockStride = 5;    // number of block rows in y-direction
-    //constexpr int blockStride = 4;    // number of block rows in y-direction
-     //constexpr int blockStride = 3;    // number of block rows in y-direction
-    constexpr int blockStride = 2;    // number of block rows in y-direction
+    // constexpr int blockStride = 4;    // number of block rows in y-direction
+    // constexpr int blockStride = 3;    // number of block rows in y-direction
+    // constexpr int blockStride = 2;    // number of block rows in y-direction
     dim3 dimGrid(nBlocks, blockStride, 1);
 
     delta_kernel<<<dimGrid, dimBlock, 0, stream>>>(d_slab,

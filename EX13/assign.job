@@ -1,10 +1,31 @@
 #!/bin/bash -l
-#SBATCH --job-name=fft11
-#SBATCH --account=uzg2 --constraint=gpu
-#SBATCH --time=0-0:5:00 --partition=debug
-#SBATCH --nodes=1 --ntasks-per-node=2 --cpus-per-task=6 --ntasks-per-core=1
-#SxxBATCH --nodes=2 --ntasks-per-node=1 --cpus-per-task=12 --ntasks-per-core=1
+#SBATCH --job-name=B1000
+#SBATCH --account=uzg2
+#SBATCH --partition=normal
+#SBATCH --constraint=gpu
+#SBATCH --time=02:00:00           
+#SBATCH --nodes=8                 
+#SBATCH --ntasks-per-node=1       
+#SBATCH --gpus-per-node=1         
+#SBATCH --cpus-per-task=12        
+#SBATCH --ntasks-per-core=1
+#SBATCH --output=B1000_%j.out
+#SBATCH --error=B1000_%j.err
+
+uenv start --view=modules prgenv-gnu/24.11:v2
+
+module load gcc cray-mpich python fftw cmake cuda      
+source $SCRATCH/spack/share/spack/setup-env.sh          
+spack load boost             
 
 export OMP_NUM_THREADS=$SLURM_CPUS_PER_TASK
-export CRAY_CUDA_MPS=1
-srun assign /store/uzh/uzh8/Box/B100.00100 100/L100 4
+export CRAY_CUDA_MPS=1            
+
+
+WORKDIR=$SCRATCH/ESC412_B1000
+mkdir -p  $WORKDIR
+cp -n /capstor/store/cscs/uzh/uzh8/Box/B1000.00100  $WORKDIR/
+
+cd $WORKDIR
+
+srun  ./assign  B1000.00100  1000/L50   4 > output_EX6.txt

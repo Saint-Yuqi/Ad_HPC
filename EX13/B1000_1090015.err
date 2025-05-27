@@ -1,0 +1,12 @@
+cp: cannot create regular file '/B1000.00100': Permission denied
+Loading 1,000,000,000 particles
+File reading took    4.7264 seconds (7,263.94 MB/s).
+Sorting took   4.06548 seconds.
+Particle exchange took   100.339 seconds.
+Assigning mass to the grid using order 4
+Mass assignment took   4.49316 seconds.
+2D transforms
+Global transpose
+1D transforms
+FFT took   0.17583 seconds.
+Using 50 logarithmic bins.
