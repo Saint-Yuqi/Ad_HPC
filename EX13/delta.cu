@@ -7,24 +7,49 @@
 //EX3
 __global__
 void delta_kernel(float *slab,
-                  int    nGrid,         
-                  int    embed,          
-                  float  inv_rhoBar,     
-                  float  inv_nGrid3)    
+    int    nGrid,         
+    int    embed,          
+    float  inv_rhoBar,     
+    float  inv_nGrid3)    
 {
+    const int i = blockIdx.x * blockDim.x + threadIdx.x;
+    if (i >= nGrid) return;
 
-    const int i = blockIdx.x * blockDim.x + threadIdx.x;  
-    const int j = blockIdx.y * blockDim.y + threadIdx.y;  
-    if (i >= nGrid || j >= nGrid) return;
-    const int stride_k = embed * nGrid;        
-    int idx = i + j * embed;                   
-    for (int k = 0; k < nGrid; ++k, idx += stride_k)
+    const int j_stride   = blockDim.y * gridDim.y; // e.g. 32*10 = 320
+    const int stride_k   = embed * nGrid;
+
+    for (int j = blockIdx.y * blockDim.y + threadIdx.y;
+    j < nGrid;
+    j += j_stride)
     {
-        float v = slab[idx];                  
-        v = v * inv_rhoBar - 1.0f;            
-        slab[idx] = v * inv_nGrid3;            
+        int idx = i + j * embed;
+        for (int k = 0; k < nGrid; ++k, idx += stride_k)
+        {
+            float v = slab[idx];
+            v = v * inv_rhoBar - 1.0f;
+            slab[idx] = v * inv_nGrid3;
+        }
     }
 }
+// void delta_kernel(float *slab,
+//                   int    nGrid,         
+//                   int    embed,          
+//                   float  inv_rhoBar,     
+//                   float  inv_nGrid3)    
+// {
+
+//     const int i = blockIdx.x * blockDim.x + threadIdx.x;  
+//     const int j = blockIdx.y * blockDim.y + threadIdx.y;  
+//     if (i >= nGrid || j >= nGrid) return;
+//     const int stride_k = embed * nGrid;        
+//     int idx = i + j * embed;                   
+//     for (int k = 0; k < nGrid; ++k, idx += stride_k)
+//     {
+//         float v = slab[idx];                  
+//         v = v * inv_rhoBar - 1.0f;            
+//         slab[idx] = v * inv_nGrid3;            
+//     }
+// }
 //EX4
 void compute_delta(float       *d_slab,
     int          nGrid,
@@ -41,8 +66,17 @@ void compute_delta(float       *d_slab,
 
     /* number of blocks per dimension, rounded up */
     int nBlocks = (nGrid + blockXY - 1) / blockXY;
-    dim3 dimGrid(nBlocks, nBlocks, 1);
-
+    //dim3 dimGrid(nBlocks, nBlocks, 1);
+    // constexpr int blockStride = 10;    // number of block rows in y-direction
+    // constexpr int blockStride = 9;    // number of block rows in y-direction
+    // constexpr int blockStride = 8;    // number of block rows in y-direction
+    // constexpr int blockStride = 7;    // number of block rows in y-direction
+    // constexpr int blockStride = 6;    // number of block rows in y-direction
+    // constexpr int blockStride = 5;    // number of block rows in y-direction
+    //constexpr int blockStride = 4;    // number of block rows in y-direction
+     //constexpr int blockStride = 3;    // number of block rows in y-direction
+    constexpr int blockStride = 2;    // number of block rows in y-direction
+    dim3 dimGrid(nBlocks, blockStride, 1);
 
     delta_kernel<<<dimGrid, dimBlock, 0, stream>>>(d_slab,
                                         nGrid,
